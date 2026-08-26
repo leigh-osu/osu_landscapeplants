@@ -1,0 +1,11 @@
+name: 'OSU Landscape Plants Migrate'
+type: module
+description: 'One-time D7 plantid → D10 migrations for the Landscape Plants site. Uninstall after cutover.'
+package: OSU
+core_version_requirement: ^10 || ^11
+dependencies:
+  - osu_landscapeplants:osu_landscapeplants
+  - drupal:migrate
+  - drupal:migrate_drupal
+  - redirect:redirect
+version: '1.0.0'

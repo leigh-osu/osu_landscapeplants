@@ -1,0 +1,29 @@
+id: lp_alias
+label: 'D7 plantid URL aliases'
+migration_tags:
+  - lp
+source:
+  plugin: d7_url_alias
+  key: migrate
+  constants:
+    slash: /
+process:
+  path:
+    plugin: concat
+    source:
+      - constants/slash
+      - source
+  alias:
+    plugin: concat
+    source:
+      - constants/slash
+      - alias
+  langcode:
+    plugin: default_value
+    default_value: en
+destination:
+  plugin: entity:path_alias
+migration_dependencies:
+  required:
+    - lp_plant
+    - lp_page

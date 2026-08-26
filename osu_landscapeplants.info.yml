@@ -1,0 +1,9 @@
+name: 'OSU Landscape Plants'
+type: module
+description: 'Landscape Plants site behaviour: computed botanical names on plant records.'
+package: OSU
+core_version_requirement: ^10 || ^11
+dependencies:
+  - drupal:node
+  - drupal:taxonomy
+version: '1.0.0'

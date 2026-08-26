@@ -1,0 +1,260 @@
+id: lp_plant
+label: 'D7 plantid plant records'
+migration_tags:
+  - lp
+source:
+  plugin: d7_node
+  node_type: node_plants
+  key: migrate
+process:
+  # nids preserved 1:1.
+  nid: nid
+  type:
+    plugin: default_value
+    default_value: plant
+  langcode:
+    plugin: default_value
+    default_value: en
+  title: title
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+
+  # Name parts.
+  field_plant_genus:
+    plugin: sub_process
+    source: field_plant_genus
+    process:
+      target_id: tid
+  field_plant_specific_epithet: field_plant_specific_epithet
+  field_plant_variety: field_plant_variety
+  field_plant_subspecies: field_plant_subspecies
+  field_plant_form: field_plant_form
+  field_plant_unranked: field_plant_unranked
+  field_plant_cultivar: field_plant_cultivar
+  field_plant_hybrid: field_plant_hybrid
+  field_plant_trademark: field_plant_trademark
+  field_plant_latin_name: field_plant_latin_name
+  field_plant_family: field_plant_family
+  field_plant_pronunciation: field_plant_pronunciation
+  field_plant_common_name: field_plant_common_name
+  field_plant_common_name_parent: field_plant_common_name_parent
+  field_synonyms: field_synonyms
+
+  # Stored computed names migrate too; the osu_landscapeplants presave
+  # recomputes both during the migration save, so a mismatch between the
+  # ported builder and the D7 stored values shows up as an update diff.
+  field_plant_sort_name: field_plant_sort_name
+  field_plant_formatted_name:
+    plugin: sub_process
+    source: field_plant_formatted_name
+    process:
+      value: value
+      format:
+        plugin: default_value
+        default_value: filtered_html
+
+  # Classification and content.
+  field_plant_type: field_plant_type
+  field_plant_native: field_plant_native
+  field_plant_review_state: field_plant_review_state
+  field_plant_description:
+    plugin: sub_process
+    source: field_plant_description
+    process:
+      value: value
+      format:
+        plugin: static_map
+        source: format
+        bypass: false
+        default_value: filtered_html
+        map:
+          filtered_html: filtered_html
+          full_html: full_html
+          plain_text: plain_text
+          ds_code: full_html
+  field_plant_details:
+    plugin: sub_process
+    source: field_plant_details
+    process:
+      value: value
+      format:
+        plugin: static_map
+        source: format
+        bypass: false
+        default_value: filtered_html
+        map:
+          filtered_html: filtered_html
+          full_html: full_html
+          plain_text: plain_text
+          ds_code: full_html
+  field_plant_original_text:
+    plugin: sub_process
+    source: field_plant_original_text
+    process:
+      value: value
+      format:
+        plugin: static_map
+        source: format
+        bypass: false
+        default_value: filtered_html
+        map:
+          filtered_html: filtered_html
+          full_html: full_html
+          plain_text: plain_text
+          ds_code: full_html
+  field_plant_original_info:
+    plugin: sub_process
+    source: field_plant_original_info
+    process:
+      value: value
+      format:
+        plugin: static_map
+        source: format
+        bypass: false
+        default_value: filtered_html
+        map:
+          filtered_html: filtered_html
+          full_html: full_html
+          plain_text: plain_text
+          ds_code: full_html
+  field_plant_review_note:
+    plugin: sub_process
+    source: field_plant_review_note
+    process:
+      value: value
+      format:
+        plugin: static_map
+        source: format
+        bypass: false
+        default_value: filtered_html
+        map:
+          filtered_html: filtered_html
+          full_html: full_html
+          plain_text: plain_text
+          ds_code: full_html
+
+  field_plant_urlref:
+    plugin: sub_process
+    source: field_plant_urlref
+    process:
+      uri: url
+      title: title
+  field_plant_images:
+    plugin: sub_process
+    source: field_plant_images
+    process:
+      target_id: fid
+      alt: alt
+      title: title
+      width: width
+      height: height
+  field_plant_features:
+    plugin: sub_process
+    source: field_plant_features
+    process:
+      target_id: tid
+
+  # Broadleaf traits.
+  field_plant_bl_flower_appearance:
+    plugin: sub_process
+    source: field_plant_bl_flower_appearance
+    process:
+      target_id: tid
+  field_plant_bl_flower_color:
+    plugin: sub_process
+    source: field_plant_bl_flower_color
+    process:
+      target_id: tid
+  field_plant_bl_fruit_color:
+    plugin: sub_process
+    source: field_plant_bl_fruit_color
+    process:
+      target_id: tid
+  field_plant_bl_fruit_shape:
+    plugin: sub_process
+    source: field_plant_bl_fruit_shape
+    process:
+      target_id: tid
+  field_plant_bl_growth_habit:
+    plugin: sub_process
+    source: field_plant_bl_growth_habit
+    process:
+      target_id: tid
+  field_plant_bl_leaf_attachment:
+    plugin: sub_process
+    source: field_plant_bl_leaf_attachment
+    process:
+      target_id: tid
+  field_plant_bl_leaf_chars:
+    plugin: sub_process
+    source: field_plant_bl_leaf_chars
+    process:
+      target_id: tid
+  field_plant_bl_leaf_color:
+    plugin: sub_process
+    source: field_plant_bl_leaf_color
+    process:
+      target_id: tid
+  field_plant_bl_leaf_persistence:
+    plugin: sub_process
+    source: field_plant_bl_leaf_persistence
+    process:
+      target_id: tid
+  field_plant_bl_leaf_types:
+    plugin: sub_process
+    source: field_plant_bl_leaf_types
+    process:
+      target_id: tid
+  field_plant_bl_stems:
+    plugin: sub_process
+    source: field_plant_bl_stems
+    process:
+      target_id: tid
+
+  # Conifer traits.
+  field_plant_con_fruit:
+    plugin: sub_process
+    source: field_plant_con_fruit
+    process:
+      target_id: tid
+  field_plant_con_growth_form:
+    plugin: sub_process
+    source: field_plant_con_growth_form
+    process:
+      target_id: tid
+  field_plant_con_growth_habit:
+    plugin: sub_process
+    source: field_plant_con_growth_habit
+    process:
+      target_id: tid
+  field_plant_con_leaf_color:
+    plugin: sub_process
+    source: field_plant_con_leaf_color
+    process:
+      target_id: tid
+  field_plant_con_leaf_persistence:
+    plugin: sub_process
+    source: field_plant_con_leaf_persistence
+    process:
+      target_id: tid
+  field_plant_con_leaf_shape_group:
+    plugin: sub_process
+    source: field_plant_con_leaf_shape_group
+    process:
+      target_id: tid
+  field_plant_con_stems:
+    plugin: sub_process
+    source: field_plant_con_stems
+    process:
+      target_id: tid
+destination:
+  plugin: entity:node
+migration_dependencies:
+  required:
+    - lp_user
+    - lp_term
+    - lp_file

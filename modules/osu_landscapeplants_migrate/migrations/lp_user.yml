@@ -1,0 +1,33 @@
+id: lp_user
+label: 'D7 plantid users'
+migration_tags:
+  - lp
+source:
+  plugin: d7_user
+  key: migrate
+process:
+  # uid 1 is the D10 install account (cws_dpla); the D7 admin stays behind.
+  # static_map blanks uid 1 so skip_on_empty drops the row; other uids pass
+  # through untouched (bypass).
+  uid:
+    -
+      plugin: static_map
+      source: uid
+      bypass: true
+      map:
+        1: ''
+    -
+      plugin: skip_on_empty
+      method: row
+  name: name
+  # D7 $S$ phpass hashes; verified by the core phpass module.
+  pass: pass
+  mail: mail
+  created: created
+  access: access
+  login: login
+  status: status
+  timezone: timezone
+  init: init
+destination:
+  plugin: entity:user

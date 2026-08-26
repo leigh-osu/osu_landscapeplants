@@ -1,0 +1,155 @@
+<?php
+
+/**
+ * @file
+ * Landscape Plants site behaviour.
+ *
+ * Ports the two computed-name builders from the D7 plantid module (and the
+ * auto_nodetitle pattern that derived the node title from the formatted
+ * name). D7 stored the results in computed fields; here they are plain
+ * stored fields recomputed on every save, so the stored values and the name
+ * parts can never drift apart.
+ */
+
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
+use Drupal\node\NodeInterface;
+
+/**
+ * Implements hook_theme().
+ *
+ * Registers the plant search-result row template (one link: formatted
+ * botanical name + common names, the D7 search row) here rather than in the
+ * theme — the markup belongs to this site's search views. A theme override
+ * of the same suggestion would still win, as usual.
+ */
+function osu_landscapeplants_theme($existing, $type, $theme, $path) {
+  return [
+    'node__plant__search_result' => [
+      'template' => 'node--plant--search-result',
+      'base hook' => 'node',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_entity_extra_field_info().
+ */
+function osu_landscapeplants_entity_extra_field_info() {
+  $extra['node']['plant']['display']['sibling_species'] = [
+    'label' => t('Sibling species'),
+    'description' => t('Other plants of the same genus (the sibling_species view).'),
+    'weight' => 50,
+    'visible' => TRUE,
+  ];
+  return $extra;
+}
+
+/**
+ * Implements hook_ENTITY_TYPE_view() for node.
+ *
+ * Renders the sibling_species view for the plant being viewed, passing the
+ * genus term id explicitly — the D7 site did this with a block whose
+ * contextual filter defaulted from the node; passing the argument directly
+ * is the same result without depending on route context resolution.
+ */
+function osu_landscapeplants_node_view(array &$build, NodeInterface $node, EntityViewDisplayInterface $display, $view_mode) {
+  if ($node->bundle() !== 'plant' || !$display->getComponent('sibling_species')) {
+    return;
+  }
+  $tid = $node->hasField('field_plant_genus') ? $node->get('field_plant_genus')->target_id : NULL;
+  if (!$tid) {
+    return;
+  }
+  $view = views_embed_view('sibling_species', 'block_1', $tid);
+  if ($view) {
+    $build['sibling_species'] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['plant-sibling-species']],
+      'title' => ['#type' => 'html_tag', '#tag' => 'h2', '#value' => t('Sibling species')],
+      'view' => $view,
+    ];
+  }
+}
+
+/**
+ * Implements hook_entity_presave().
+ */
+function osu_landscapeplants_entity_presave(EntityInterface $entity) {
+  if ($entity->getEntityTypeId() !== 'node' || $entity->bundle() !== 'plant') {
+    return;
+  }
+
+  $part = function (string $field) use ($entity): string {
+    return $entity->hasField($field) && !$entity->get($field)->isEmpty()
+      ? trim((string) $entity->get($field)->value)
+      : '';
+  };
+  $genus_term = $entity->get('field_plant_genus')->entity;
+  $genus = $genus_term ? $genus_term->label() : '';
+  $hybrid = (bool) $entity->get('field_plant_hybrid')->value;
+  $cultivar = $part('field_plant_cultivar');
+
+  // Formatted botanical name, markup included: exact D7 chain — genus,
+  // hybrid ×, specific epithet, var., subsp., f., unranked, then the
+  // cultivar quoted or marked ™/® per the trademark field.
+  $name = $genus !== '' ? '<em>' . $genus . '</em>' : '';
+  $name .= $hybrid ? ' ×' : '';
+  foreach ([
+    'field_plant_specific_epithet' => ['prefix' => ' ', 'em' => TRUE],
+    'field_plant_variety' => ['prefix' => ' var. ', 'em' => TRUE],
+    'field_plant_subspecies' => ['prefix' => ' subsp. ', 'em' => TRUE],
+    'field_plant_form' => ['prefix' => ' f. ', 'em' => TRUE],
+    'field_plant_unranked' => ['prefix' => ' ', 'em' => FALSE],
+  ] as $field => $spec) {
+    $value = $part($field);
+    if ($value !== '') {
+      $name .= $spec['prefix'] . ($spec['em'] ? '<em>' . $value . '</em>' : $value);
+    }
+  }
+  if ($cultivar !== '') {
+    switch ($entity->get('field_plant_trademark')->value) {
+      case 'tm':
+        $name .= ' ' . $cultivar . '™';
+        break;
+
+      case 'r':
+        $name .= ' ' . $cultivar . '®';
+        break;
+
+      default:
+        $name .= " '" . $cultivar . "'";
+    }
+  }
+  $entity->set('field_plant_formatted_name', [
+    'value' => $name,
+    'format' => 'filtered_html',
+  ]);
+
+  // Sort name: the same parts, unmarked, with the hybrid × stripped from the
+  // genus so hybrids collate beside their genus.
+  $sort = str_replace('×', '', $genus);
+  foreach ([
+    'field_plant_specific_epithet',
+    'field_plant_variety',
+    'field_plant_subspecies',
+    'field_plant_form',
+    'field_plant_unranked',
+  ] as $field) {
+    $value = $part($field);
+    if ($value !== '') {
+      $sort .= ' ' . $value;
+    }
+  }
+  if ($cultivar !== '') {
+    $sort .= ' ' . $cultivar;
+  }
+  $entity->set('field_plant_sort_name', trim($sort));
+
+  // Node title: the formatted name without markup (the D7 auto_nodetitle
+  // pattern). Entity titles are plain text, so ™/®/× survive but <em> goes.
+  $title = trim(strip_tags($name));
+  if ($title !== '') {
+    $entity->setTitle($title);
+  }
+}

@@ -1,0 +1,11 @@
+{#
+/**
+ * @file
+ * Plant search result row: the whole entry is one link, exactly the D7
+ * search_broadleaf/search_conifer rendering — formatted botanical name
+ * followed by the common name(s) in parentheses.
+ */
+#}
+<div{{ attributes.addClass('plant-search-result') }}>
+  <a href="{{ url }}">{{ content.field_plant_formatted_name }}{% if node.field_plant_common_name.value %} <span class="common-name">({{ node.field_plant_common_name|map(item => item.value)|join(', ') }})</span>{% endif %}</a>
+</div>

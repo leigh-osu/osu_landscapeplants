@@ -1,0 +1,45 @@
+id: lp_menu_link
+label: 'D7 plantid main menu links'
+migration_tags:
+  - lp
+source:
+  plugin: menu_link
+  key: migrate
+process:
+  # Only the public main menu migrates; management/devel/shortcut noise stays
+  # behind. D7 'main-menu' becomes core's 'main'.
+  menu_name:
+    plugin: static_map
+    source: menu_name
+    bypass: false
+    default_value: ''
+    map:
+      main-menu: main
+  _skip:
+    plugin: skip_on_empty
+    method: row
+    source: '@menu_name'
+  id: mlid
+  title: link_title
+  description: description
+  link/uri:
+    plugin: link_uri
+    source: link_path
+  link/options: options
+  external: external
+  weight: weight
+  expanded: expanded
+  enabled: enabled
+  parent:
+    plugin: menu_link_parent
+    source:
+      - plid
+      - '@menu_name'
+      - parent_link_path
+destination:
+  plugin: entity:menu_link_content
+  default_bundle: menu_link_content
+migration_dependencies:
+  required:
+    - lp_plant
+    - lp_page

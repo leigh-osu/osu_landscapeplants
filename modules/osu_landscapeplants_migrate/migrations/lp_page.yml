@@ -1,0 +1,60 @@
+id: lp_page
+label: 'D7 plantid basic pages'
+migration_tags:
+  - lp
+source:
+  plugin: d7_node
+  node_type: page
+  key: migrate
+process:
+  nid: nid
+  type:
+    plugin: default_value
+    default_value: page
+  langcode:
+    plugin: default_value
+    default_value: en
+  title: title
+  uid: node_uid
+  status: status
+  created: created
+  changed: changed
+  promote: promote
+  sticky: sticky
+  body:
+    plugin: sub_process
+    source: body
+    process:
+      value: value
+      summary: summary
+      format:
+        plugin: static_map
+        source: format
+        bypass: false
+        default_value: filtered_html
+        map:
+          filtered_html: filtered_html
+          full_html: full_html
+          plain_text: plain_text
+          ds_code: full_html
+  field_page_image:
+    plugin: sub_process
+    source: field_page_image
+    process:
+      target_id: fid
+      alt: alt
+      title: title
+      width: width
+      height: height
+  field_page_species_reference:
+    plugin: sub_process
+    source: field_page_species_reference
+    process:
+      target_id: target_id
+destination:
+  plugin: entity:node
+migration_dependencies:
+  required:
+    - lp_user
+    - lp_file
+    - lp_plant

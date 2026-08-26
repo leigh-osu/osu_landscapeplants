@@ -1,0 +1,38 @@
+id: lp_file
+label: 'D7 plantid files'
+migration_tags:
+  - lp
+source:
+  plugin: d7_file
+  key: migrate
+  scheme: public
+  constants:
+    # The agscid7 docroot, mounted read-only by docker-compose.d7files.yaml
+    # locally; on Acquia point this at the rsynced D7 files tree instead.
+    # The local mount is sparse (stage_file_proxy) — rows whose file is
+    # missing fail and re-import cleanly after a full files pull.
+    source_base_path: /var/www/d7
+process:
+  fid: fid
+  filename: filename
+  source_full_path:
+    -
+      plugin: concat
+      delimiter: /
+      source:
+        - constants/source_base_path
+        - filepath
+    -
+      plugin: urlencode
+  uri:
+    plugin: file_copy
+    source:
+      - '@source_full_path'
+      - uri
+  filemime: filemime
+  status: status
+  created: timestamp
+  changed: timestamp
+  uid: uid
+destination:
+  plugin: entity:file

@@ -1,0 +1,28 @@
+id: lp_term
+label: 'D7 plantid taxonomy terms'
+migration_tags:
+  - lp
+source:
+  plugin: d7_taxonomy_term
+  key: migrate
+process:
+  # tids are preserved 1:1; D10 vocabulary ids equal the D7 machine names.
+  tid: tid
+  vid: machine_name
+  name: name
+  description/value: description
+  weight: weight
+  parent_id:
+    -
+      plugin: skip_on_empty
+      method: process
+      source: parent
+    -
+      plugin: migration_lookup
+      migration: lp_term
+  parent:
+    plugin: default_value
+    default_value: 0
+    source: '@parent_id'
+destination:
+  plugin: entity:taxonomy_term

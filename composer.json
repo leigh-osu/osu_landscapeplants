@@ -1,0 +1,9 @@
+{
+    "name": "leigh-osu/osu_landscapeplants",
+    "description": "Landscape Plants site behaviour: computed botanical names, sibling species, search-result rendering, and the one-time D7 plantid migrations.",
+    "type": "drupal-custom-module",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "drupal/core": "^10 || ^11"
+    }
+}
