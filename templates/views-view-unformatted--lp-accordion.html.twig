@@ -1,0 +1,22 @@
+{#
+/**
+ * @file
+ * One group of the species / common-name lists as a collapsed accordion
+ * panel (the D7 views_accordion style): the group title opens its rows.
+ * Native <details> — keyboard accessible, no script.
+ */
+#}
+{% if title %}
+<details class="lp-accordion">
+  <summary>{{ title }}</summary>
+  <div class="lp-accordion__rows">
+{% endif %}
+{% for row in rows %}
+  <div{{ row.attributes.addClass(default_row_class ? 'views-row') }}>
+    {{- row.content -}}
+  </div>
+{% endfor %}
+{% if title %}
+  </div>
+</details>
+{% endif %}

@@ -11,7 +11,9 @@
  * parts can never drift apart.
  */
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\node\NodeInterface;
 
@@ -28,6 +30,30 @@ function osu_landscapeplants_theme($existing, $type, $theme, $path) {
     'node__plant__search_result' => [
       'template' => 'node--plant--search-result',
       'base hook' => 'node',
+    ],
+    // Full plant entry: content on the left, the genus list beside it (the
+    // D7 right sidebar).
+    'node__plant__full' => [
+      'template' => 'node--plant--full',
+      'base hook' => 'node',
+    ],
+    // Species and common-name lists: each group is an accordion panel.
+    'views_view_unformatted__species_list' => [
+      'template' => 'views-view-unformatted--lp-accordion',
+      'base hook' => 'views_view_unformatted',
+    ],
+    'views_view_unformatted__common_name_list' => [
+      'template' => 'views-view-unformatted--lp-accordion',
+      'base hook' => 'views_view_unformatted',
+    ],
+    // Plant search results: genus headings between rows.
+    'views_view_unformatted__search_broadleaf' => [
+      'template' => 'views-view-unformatted--lp-search',
+      'base hook' => 'views_view_unformatted',
+    ],
+    'views_view_unformatted__search_conifer' => [
+      'template' => 'views-view-unformatted--lp-search',
+      'base hook' => 'views_view_unformatted',
     ],
   ];
 }
@@ -54,7 +80,14 @@ function osu_landscapeplants_entity_extra_field_info() {
  * is the same result without depending on route context resolution.
  */
 function osu_landscapeplants_node_view(array &$build, NodeInterface $node, EntityViewDisplayInterface $display, $view_mode) {
-  if ($node->bundle() !== 'plant' || !$display->getComponent('sibling_species')) {
+  if ($node->bundle() !== 'plant') {
+    return;
+  }
+  // The D7 image grid was headed "Click image to enlarge".
+  if ($view_mode === 'full' && !empty($build['field_plant_images'][0])) {
+    $build['field_plant_images']['#prefix'] = '<p class="plant-images-hint"><em>' . t('Click image to enlarge') . '</em></p>';
+  }
+  if (!$display->getComponent('sibling_species')) {
     return;
   }
   $tid = $node->hasField('field_plant_genus') ? $node->get('field_plant_genus')->target_id : NULL;
@@ -63,10 +96,16 @@ function osu_landscapeplants_node_view(array &$build, NodeInterface $node, Entit
   }
   $view = views_embed_view('sibling_species', 'block_1', $tid);
   if ($view) {
+    // D7 titled the block "Genus <name>".
+    $genus = $node->get('field_plant_genus')->entity;
     $build['sibling_species'] = [
       '#type' => 'container',
       '#attributes' => ['class' => ['plant-sibling-species']],
-      'title' => ['#type' => 'html_tag', '#tag' => 'h2', '#value' => t('Sibling species')],
+      'title' => [
+        '#type' => 'html_tag',
+        '#tag' => 'h2',
+        '#value' => $genus ? t('Genus @name', ['@name' => $genus->label()]) : t('Genus'),
+      ],
       'view' => $view,
     ];
   }
@@ -153,3 +192,163 @@ function osu_landscapeplants_entity_presave(EntityInterface $entity) {
     $entity->setTitle($title);
   }
 }
+
+/**
+ * Implements hook_page_attachments().
+ *
+ * Site-specific CSS for the public theme; admin pages (gin) are left alone.
+ */
+function osu_landscapeplants_page_attachments(array &$attachments) {
+  if (\Drupal::theme()->getActiveTheme()->getName() === 'manzanita') {
+    $attachments['#attached']['library'][] = 'osu_landscapeplants/site';
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for field templates.
+ *
+ * Plant image grid: print each image's title beneath its thumbnail, as the
+ * D7 species_pictures view did. The colorbox formatter only uses the title
+ * as the lightbox caption.
+ */
+function osu_landscapeplants_preprocess_field(array &$variables) {
+  if (($variables['field_name'] ?? NULL) !== 'field_plant_images'
+    || ($variables['element']['#view_mode'] ?? NULL) !== 'full') {
+    return;
+  }
+  foreach ($variables['items'] as $delta => &$item) {
+    $title = trim((string) ($variables['element']['#items'][$delta]->title ?? ''));
+    if ($title === '') {
+      continue;
+    }
+    $item['content'] = [
+      'image' => $item['content'],
+      'caption' => [
+        '#type' => 'html_tag',
+        '#tag' => 'p',
+        '#attributes' => ['class' => ['plant-image-caption']],
+        '#value' => Html::escape($title),
+      ],
+    ];
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for the page title.
+ *
+ * A plant page is headed by its formatted botanical name (italic genus and
+ * epithet, upright cultivar), as on D7, rather than the plain node title.
+ */
+function osu_landscapeplants_preprocess_page_title(array &$variables) {
+  $route_match = \Drupal::routeMatch();
+  if ($route_match->getRouteName() !== 'entity.node.canonical') {
+    return;
+  }
+  $node = $route_match->getParameter('node');
+  if (!$node instanceof NodeInterface || $node->bundle() !== 'plant' || !$node->hasField('field_plant_formatted_name')) {
+    return;
+  }
+  $formatted = trim((string) $node->get('field_plant_formatted_name')->value);
+  if ($formatted !== '') {
+    $variables['title'] = [
+      '#markup' => $formatted,
+      '#allowed_tags' => ['em', 'i', 'sup', 'sub'],
+    ];
+  }
+}
+
+/**
+ * Implements hook_form_BASE_FORM_ID_alter() for node forms.
+ *
+ * Plant edit form: the three D7 fieldsets (Naming, Features, Review). The
+ * order of the fields inside each comes from the form display's weights;
+ * this only gathers them, so the form display stays the one place to
+ * reorder or hide a field.
+ */
+function osu_landscapeplants_form_node_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  if (!in_array($form_id, ['node_plant_form', 'node_plant_edit_form'], TRUE)) {
+    return;
+  }
+  $groups = [
+    'group_plant_naming' => [
+      'title' => t('Naming'),
+      'weight' => 1,
+      'fields' => [
+        'field_plant_family', 'field_plant_genus', 'field_plant_specific_epithet',
+        'field_plant_hybrid', 'field_plant_latin_name', 'field_plant_cultivar',
+        'field_plant_trademark', 'field_plant_variety', 'field_plant_subspecies',
+        'field_plant_form', 'field_plant_unranked', 'field_plant_common_name',
+        'field_plant_pronunciation', 'field_synonyms', 'field_plant_common_name_parent',
+      ],
+    ],
+    'group_plant_features' => [
+      'title' => t('Features'),
+      'weight' => 10,
+      'fields' => [
+        'field_plant_native', 'field_plant_type',
+        'field_plant_bl_growth_habit', 'field_plant_bl_stems', 'field_plant_bl_leaf_persistence',
+        'field_plant_bl_leaf_attachment', 'field_plant_bl_leaf_color', 'field_plant_bl_leaf_types',
+        'field_plant_bl_leaf_chars', 'field_plant_bl_flower_appearance', 'field_plant_bl_flower_color',
+        'field_plant_bl_fruit_shape', 'field_plant_bl_fruit_color',
+        'field_plant_con_growth_habit', 'field_plant_con_growth_form', 'field_plant_con_stems',
+        'field_plant_con_leaf_persistence', 'field_plant_con_leaf_color',
+        'field_plant_con_leaf_shape_group', 'field_plant_con_fruit',
+      ],
+    ],
+    'group_review' => [
+      'title' => t('Review'),
+      'weight' => 14,
+      'fields' => ['field_plant_review_state', 'field_plant_review_note'],
+    ],
+  ];
+  foreach ($groups as $name => $group) {
+    $children = array_filter($group['fields'], fn($field) => isset($form[$field]));
+    if (!$children) {
+      continue;
+    }
+    $form[$name] = [
+      '#type' => 'details',
+      '#title' => $group['title'],
+      '#open' => TRUE,
+      '#weight' => $group['weight'],
+    ];
+    foreach ($children as $field) {
+      $form[$field]['#group'] = $name;
+    }
+  }
+}
+
+/**
+ * Implements hook_preprocess_HOOK() for views_view_unformatted.
+ *
+ * Plant search results are rendered entities sorted by sort name, so plants
+ * of a genus are already adjacent; mark the first row of each run with its
+ * genus so the template can print the D7 genus heading above it.
+ */
+function osu_landscapeplants_preprocess_views_view_unformatted(array &$variables) {
+  $view = $variables['view'];
+  if (!in_array($view->id(), ['search_broadleaf', 'search_conifer'], TRUE)) {
+    return;
+  }
+  $previous = NULL;
+  foreach ($variables['rows'] as $id => &$row) {
+    $result = $view->result[$id] ?? NULL;
+    $node = NULL;
+    if ($result && isset($result->_object)) {
+      $node = $result->_object->getValue();
+    }
+    elseif ($result && isset($result->_item) && $result->_item->getOriginalObject(FALSE)) {
+      $node = $result->_item->getOriginalObject(FALSE)->getValue();
+    }
+    elseif ($result && isset($result->_item)) {
+      $object = $result->_item->getOriginalObject();
+      $node = $object ? $object->getValue() : NULL;
+    }
+    $genus = ($node instanceof NodeInterface && $node->hasField('field_plant_genus') && $node->get('field_plant_genus')->entity)
+      ? $node->get('field_plant_genus')->entity->label()
+      : '';
+    $row['genus_heading'] = ($genus !== '' && $genus !== $previous) ? $genus : NULL;
+    $previous = $genus;
+  }
+}
+

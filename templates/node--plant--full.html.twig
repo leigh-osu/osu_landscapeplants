@@ -1,0 +1,26 @@
+{#
+/**
+ * @file
+ * Full plant entry, laid out as on D7: the plant's details and image grid
+ * in the main column, the "Genus …" list of sibling plants beside it.
+ */
+#}
+{% set classes = [
+  'node',
+  'node--type-' ~ node.bundle|clean_class,
+  not node.isPublished() ? 'node--unpublished',
+  view_mode ? 'node--view-mode-' ~ view_mode|clean_class,
+  'plant-entry',
+] %}
+<article{{ attributes.addClass(classes) }}>
+  {{ title_prefix }}
+  {{ title_suffix }}
+  <div{{ content_attributes.addClass('node__content', 'plant-entry__main') }}>
+    {{ content|without('sibling_species') }}
+  </div>
+  {% if content.sibling_species|render|trim %}
+    <aside class="plant-entry__aside">
+      {{ content.sibling_species }}
+    </aside>
+  {% endif %}
+</article>

@@ -1,0 +1,16 @@
+{#
+/**
+ * @file
+ * Plant search results (broadleaf / conifer): rows under a genus heading
+ * wherever the genus changes, as the D7 views grouped them. The heading is
+ * set per row by osu_landscapeplants_preprocess_views_view_unformatted().
+ */
+#}
+{% for row in rows %}
+  {% if row.genus_heading %}
+    <h3 class="plant-search-genus">{{ row.genus_heading }}</h3>
+  {% endif %}
+  <div{{ row.attributes.addClass(default_row_class ? 'views-row') }}>
+    {{- row.content -}}
+  </div>
+{% endfor %}

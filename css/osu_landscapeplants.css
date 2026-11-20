@@ -1,0 +1,245 @@
+/**
+ * Landscape Plants site-specific styling.
+ *
+ * Attached on every front-end page by osu_landscapeplants_page_attachments().
+ */
+
+/* Breathing room around the main content area (page title + content). */
+#madrone-content-container {
+  padding: 2em 1em;
+}
+
+/* Page titles keep the case they were typed in (botanical names are
+   case-sensitive); manzanita uppercases every h1. The header site name is
+   left as the theme sets it. */
+#madrone-content-container h1 {
+  text-transform: none;
+}
+
+/* ---------------------------------------------------------------------
+   Plant entry (node--plant--full.html.twig), laid out as on D7.
+   --------------------------------------------------------------------- */
+
+/* Title sits at the left, above the details, not centred. */
+#madrone-content-container:has(> .plant-entry) .page-title {
+  margin-inline: 0;
+  max-width: none;
+  text-align: left;
+}
+
+/* Main column + genus list side by side on wide screens. */
+@media (min-width: 992px) {
+  .plant-entry {
+    align-items: start;
+    column-gap: 3rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 270px;
+  }
+}
+
+/* "Label: value" rows; multiple values stack beside the label. */
+.plant-entry .field--label-inline {
+  display: flex;
+  flex-flow: row nowrap;
+  gap: 0.4em;
+}
+
+.plant-entry .field--label-inline > .field__label {
+  flex: none;
+}
+
+.plant-entry .field--label-inline > .field__label::after {
+  content: ":";
+}
+
+.plant-entry .field--label-inline > .field__items {
+  display: block;
+}
+
+.plant-entry .field--name-field-plant-genus a {
+  font-style: italic;
+}
+
+.plant-entry .field--name-field-plant-original-info {
+  margin-top: 0.5rem;
+}
+
+/* Image grid: 250px cells, caption under each thumbnail. */
+.plant-entry .plant-images-hint {
+  margin: 1.5rem 0 0.5rem;
+}
+
+.plant-entry .field--name-field-plant-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 10px;
+}
+
+.plant-entry .field--name-field-plant-images > .field__item {
+  width: 250px;
+}
+
+.plant-entry .plant-image-caption {
+  line-height: 1.3;
+  margin: 0.25rem 0 0;
+}
+
+/* Genus list. */
+.plant-sibling-species h2 {
+  background: #333;
+  color: #fff;
+  font-size: 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.plant-sibling-species table {
+  font-size: 0.875rem;
+  width: 100%;
+}
+
+.plant-sibling-species td {
+  border-bottom: 1px solid #ddd;
+  padding: 0.5rem 0.6rem;
+  vertical-align: middle;
+}
+
+.plant-sibling-species td + td {
+  border-left: 1px solid #ddd;
+}
+
+.plant-sibling-species td ul {
+  margin: 0;
+  padding-left: 1em;
+}
+
+/* ---------------------------------------------------------------------
+   Chevron bullets, as on D7: lists in page/plant text, the section menu
+   and the genus list. Numbered lists and theme navigation are untouched.
+   --------------------------------------------------------------------- */
+#madrone-content-container .node__content ul > li::marker,
+#madrone-content-container .lp-section-menu ul > li::marker,
+.plant-sibling-species td ul > li::marker {
+  content: "\203A\00A0\00A0";
+}
+
+/* ---------------------------------------------------------------------
+   Species (/species) and common-name (/common) lists, as on D7: A–Z index
+   down the left, one collapsed accordion panel per genus / name group.
+   --------------------------------------------------------------------- */
+.lp-az::after {
+  clear: both;
+  content: "";
+  display: table;
+}
+
+.lp-az__letters {
+  float: left;
+  width: 50px;
+}
+
+.lp-az__letters ul.views-summary {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: center;
+}
+
+.lp-az__letters ul.views-summary a {
+  display: block;
+  font-size: 1.4em;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.lp-az > header,
+.lp-az > .lp-accordion {
+  margin-left: 50px;
+}
+
+.lp-accordion {
+  border-radius: 4px;
+  margin-bottom: 3px;
+}
+
+.lp-accordion > summary {
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0.4rem 0.75rem;
+}
+
+.lp-az--species .lp-accordion {
+  background: #eeeefc;
+}
+
+.lp-az--species .lp-accordion > summary {
+  font-style: italic;
+}
+
+.lp-az--common .lp-accordion {
+  background: #fdeeee;
+}
+
+.lp-accordion__rows {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-top: 0;
+  padding: 0.5rem 1.75rem;
+}
+
+/* ---------------------------------------------------------------------
+   Plant search pages (/search-broadleaf, /search-conifer), as on D7: the
+   filters in a grey column on the left, results grouped by genus.
+   --------------------------------------------------------------------- */
+main:has(.layout-sidebar .block-facets) > .layout-sidebar {
+  background: #ebe9e9;
+  order: -1;
+  padding-bottom: 1rem;
+  padding-top: 1rem;
+}
+
+.layout-sidebar .block-facets h2,
+.layout-sidebar .block-facets h2.block-title {
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 1rem 0 0.4rem;
+  text-transform: none;
+}
+
+.layout-sidebar .block-facets ul {
+  font-size: 0.875rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.layout-sidebar .block-facets li.facet-item {
+  display: flex;
+  gap: 0.4em;
+  line-height: 1.35;
+  margin: 0.2rem 0;
+}
+
+.layout-sidebar .block-facets li.facet-item input {
+  flex: none;
+  margin-top: 0.2em;
+}
+
+.layout-sidebar .lp-clear-filters p {
+  margin: 0;
+}
+
+.plant-search-genus {
+  font-size: 1.15rem;
+  font-style: italic;
+  font-weight: 400;
+  margin: 1.75rem 0 0.75rem;
+  text-transform: none;
+}
+
+/* One line per result: formatted name then (common names). */
+.plant-search-result .field {
+  display: inline;
+}

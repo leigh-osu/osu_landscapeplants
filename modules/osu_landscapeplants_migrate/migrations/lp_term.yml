@@ -11,6 +11,9 @@ process:
   vid: machine_name
   name: name
   description/value: description
+  # Without the format D10 treats every description as plain text and
+  # prints its markup literally (glossary, genus descriptions).
+  description/format: format
   weight: weight
   parent_id:
     -
