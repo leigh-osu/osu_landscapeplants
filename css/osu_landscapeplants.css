@@ -152,6 +152,13 @@
   text-decoration: none;
 }
 
+/* D7 rollover: the letter darkens, no underline. */
+.lp-az__letters ul.views-summary a:hover,
+.lp-az__letters ul.views-summary a:focus {
+  color: #615042;
+  text-decoration: none;
+}
+
 .lp-az > header,
 .lp-az > .lp-accordion {
   margin-left: 50px;
@@ -178,6 +185,36 @@
 
 .lp-az--common .lp-accordion {
   background: #fdeeee;
+}
+
+/* D7 rollovers (jQuery UI accordion states): an open panel's header takes
+   the darker tint, and any header under the pointer or keyboard focus
+   turns orange with white text. */
+.lp-accordion > summary {
+  border-radius: 4px;
+}
+
+.lp-accordion[open] > summary {
+  border-radius: 4px 4px 0 0;
+}
+
+.lp-az--species .lp-accordion[open] > summary {
+  background: #dde;
+}
+
+.lp-az--common .lp-accordion[open] > summary {
+  background: #edd;
+}
+
+.lp-az .lp-accordion > summary:hover,
+.lp-az .lp-accordion > summary:focus-visible {
+  background: #c34500;
+  color: #fff;
+}
+
+.lp-az .lp-accordion > summary:hover a,
+.lp-az .lp-accordion > summary:focus-visible a {
+  color: #fff;
 }
 
 .lp-accordion__rows {
